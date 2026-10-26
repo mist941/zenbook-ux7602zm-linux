@@ -1,0 +1,74 @@
+#!/usr/bin/python3 -I
+"""Haptic click strength of the UX7602 touchpad (I2C HID 093A:3F01, ACPI ASUP1413).
+
+The pad has no mechanical button: clicks are detected by force sensors and
+confirmed by a haptic actuator. Its "Simple Haptic Controller / Intensity"
+feature (report 0x09, 0-100) is set by Windows on every boot and resume;
+Linux never touches it, so the pad keeps the value its controller wakes up
+with and clicking may not work at all.
+
+The firmware accepts 0 (clicking disabled), 25, 50, 75 and 100 and ignores
+anything else. The value cannot be read back, so "get" prints the saved one.
+
+Usage: zb-touchpad get | set 0|25|50|75|100 | restore
+"""
+import fcntl
+import glob
+import os
+import sys
+
+STATE = "/var/lib/zenbook-ux7602/touchpad-haptic"
+DEFAULT = 50
+LEVELS = (0, 25, 50, 75, 100)
+REPORT_ID = 0x09
+
+
+def hidiocsfeature(length):
+    return (3 << 30) | (length << 16) | (ord("H") << 8) | 0x06
+
+
+def hidraw_node():
+    nodes = glob.glob("/sys/bus/hid/devices/0018:093A:3F01.*/hidraw/hidraw*")
+    if not nodes:
+        sys.exit("zb-touchpad: touchpad 093A:3F01 not found")
+    return "/dev/" + os.path.basename(nodes[0])
+
+
+def apply(value):
+    fd = os.open(hidraw_node(), os.O_RDWR)
+    try:
+        fcntl.ioctl(fd, hidiocsfeature(2), bytearray([REPORT_ID, value]))
+    finally:
+        os.close(fd)
+
+
+def saved():
+    try:
+        with open(STATE) as f:
+            value = int(f.read().strip())
+        if value in LEVELS:
+            return value
+    except (OSError, ValueError):
+        pass
+    return DEFAULT
+
+
+def main(argv):
+    cmd = argv[0] if argv else ""
+    if cmd == "get":
+        print(saved())
+    elif cmd == "set" and len(argv) == 2 and argv[1].isdigit() and int(argv[1]) in LEVELS:
+        value = int(argv[1])
+        apply(value)
+        os.makedirs(os.path.dirname(STATE), exist_ok=True)
+        with open(STATE, "w") as f:
+            f.write(f"{value}\n")
+        print(value)
+    elif cmd == "restore":
+        apply(saved())
+    else:
+        sys.exit(__doc__.strip())
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

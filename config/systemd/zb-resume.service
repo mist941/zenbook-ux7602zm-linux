@@ -1,0 +1,13 @@
+[Unit]
+Description=ASUS UX7602: restore touchpad haptics (and keyboard without the module) after resume
+After=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
+
+[Service]
+Type=oneshot
+# the touchpad needs a moment to come back after i2c-hid resumes it
+ExecStartPre=/bin/sleep 1
+ExecStart=-/usr/local/sbin/zb-touchpad restore
+ExecStart=-/bin/sh -c '[ -d /sys/devices/platform/asus_ux7602 ] || /usr/local/sbin/zb-kbd restore'
+
+[Install]
+WantedBy=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target

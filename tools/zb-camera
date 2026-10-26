@@ -1,0 +1,74 @@
+#!/usr/bin/python3 -I
+"""Webcam privacy switch of the ASUS Zenbook UX7602ZM.
+
+The webcam's privacy input (and the F10 key LED) is GPIO 0x090E000F, reached
+through ASUS WMI device 0x00060078: 1 = camera available, 0 = blocked (black
+frames, V4L2 "privacy" control reads 1). Fn+F10 does not touch it by itself;
+on Windows the ASUS service flips it.
+
+Uses the asus_ux7602 kernel module when loaded, otherwise the asus-nb-wmi
+debugfs interface (which kernel lockdown under Secure Boot refuses to write).
+
+Usage: zb-camera status | on | off | toggle
+"""
+import os
+import re
+import sys
+
+MODULE_ATTR = "/sys/devices/platform/asus_ux7602/camera_blocked"
+DEBUGFS = "/sys/kernel/debug/asus-nb-wmi"
+DEVID = "0x00060078"
+
+
+def debugfs_call(name, ctrl=None):
+    if not os.path.isdir(DEBUGFS):
+        sys.exit("zb-camera: the asus_ux7602 module is not loaded and the asus-nb-wmi "
+                 "debugfs interface is missing (run as root; is asus-nb-wmi loaded?)")
+    with open(f"{DEBUGFS}/dev_id", "w") as f:
+        f.write(DEVID)
+    if ctrl is not None:
+        with open(f"{DEBUGFS}/ctrl_param", "w") as f:
+            f.write(str(ctrl))
+    with open(f"{DEBUGFS}/{name}") as f:
+        out = f.read()
+    m = re.search(r"= (0x[0-9a-f]+|0)\s*$", out)
+    return int(m.group(1), 16) if m else None
+
+
+def blocked():
+    if os.path.exists(MODULE_ATTR):
+        with open(MODULE_ATTR) as f:
+            return f.read().strip() == "1"
+    value = debugfs_call("dsts")
+    if value is None or not value & 0x10000:
+        sys.exit("zb-camera: WMI device 0x00060078 not present")
+    return not value & 1
+
+
+def set_blocked(state):
+    if os.path.exists(MODULE_ATTR):
+        with open(MODULE_ATTR, "w") as f:
+            f.write("1" if state else "0")
+        return
+    try:
+        debugfs_call("devs", 0 if state else 1)
+    except PermissionError:
+        sys.exit("zb-camera: debugfs refuses writes (not root, or kernel lockdown under "
+                 "Secure Boot); install the asus_ux7602 module")
+
+
+def main(argv):
+    cmd = argv[0] if argv else "status"
+    if cmd == "on":
+        set_blocked(False)
+    elif cmd == "off":
+        set_blocked(True)
+    elif cmd == "toggle":
+        set_blocked(not blocked())
+    elif cmd != "status":
+        sys.exit(__doc__.strip())
+    print("blocked" if blocked() else "available")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

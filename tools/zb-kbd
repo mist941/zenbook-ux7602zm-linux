@@ -1,0 +1,138 @@
+#!/usr/bin/python3 -I
+"""Keyboard backlight and colour of the UX7602ZM N-KEY keyboard (USB 0B05:8854).
+
+Uses the asus_ux7602 kernel module when it is loaded; otherwise talks to the
+keyboard's vendor interface (USB interface 1) over hidraw directly.
+
+Usage: zb-kbd status
+       zb-kbd brightness 0-3
+       zb-kbd color RRGGBB
+       zb-kbd effect static|breathing|strobe RRGGBB [speed 1-3]
+       zb-kbd effect cycle|rainbow|raindrop [speed 1-3]
+       zb-kbd restore        (hidraw mode: re-apply the saved state)
+"""
+import fcntl
+import glob
+import json
+import os
+import re
+import sys
+
+LED = "/sys/class/leds/asus::kbd_backlight/brightness"
+MODULE_COLOR = "/sys/devices/platform/asus_ux7602/kbd_color"
+STATE = "/var/lib/zenbook-ux7602/kbd.json"
+EFFECTS = {"static": 0x00, "breathing": 0x01, "strobe": 0x0A,
+           "cycle": 0x02, "rainbow": 0x03, "raindrop": 0x05}
+COLOURED = ("static", "breathing", "strobe")
+HANDSHAKE = b"\x5aASUS Tech.Inc.\x00"
+
+
+def hidiocsfeature(length):
+    return (3 << 30) | (length << 16) | (ord("H") << 8) | 0x06
+
+
+def hidraw_node():
+    """hidraw node of USB interface 1 (the HID instance number depends on probe order)."""
+    for dev in glob.glob("/sys/bus/hid/devices/0003:0B05:8854.*"):
+        if ":1.1/" in os.path.realpath(dev) + "/":
+            nodes = glob.glob(dev + "/hidraw/hidraw*")
+            if nodes:
+                return "/dev/" + os.path.basename(nodes[0])
+    sys.exit("zb-kbd: keyboard 0B05:8854 not found")
+
+
+def send(fd, data):
+    buf = bytearray(64)
+    buf[: len(data)] = data
+    fcntl.ioctl(fd, hidiocsfeature(64), buf)
+
+
+def raw_apply(brightness=None, effect=None, rgb=None, speed=2):
+    fd = os.open(hidraw_node(), os.O_RDWR)
+    try:
+        send(fd, HANDSHAKE)
+        if effect is not None:
+            r, g, b = rgb or (0xFF, 0xFF, 0xFF)
+            speed_byte = 4 - speed if effect else 0
+            for sub in (0xA0, 0xA5):
+                send(fd, bytes([0x5C, sub, 0, effect, r, g, b, speed_byte]))
+        if brightness is not None:
+            send(fd, bytes([0x5A, 0xBA, 0xC5, 0xC4, brightness]))
+    finally:
+        os.close(fd)
+
+
+def load():
+    try:
+        with open(STATE) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {"brightness": 2, "effect": "static", "color": "ffffff", "speed": 2}
+
+
+def save(state):
+    os.makedirs(os.path.dirname(STATE), exist_ok=True)
+    tmp = STATE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(state, f)
+    os.replace(tmp, STATE)
+
+
+def parse_color(text):
+    if not re.fullmatch(r"[0-9a-fA-F]{6}", text or ""):
+        sys.exit(f"zb-kbd: '{text}' is not RRGGBB")
+    return text.lower()
+
+
+def set_effect(state, effect, color, speed):
+    if os.path.exists(MODULE_COLOR):
+        words = [effect] + ([color] if effect in COLOURED else []) + [str(speed)]
+        with open(MODULE_COLOR, "w") as f:
+            f.write(" ".join(words))
+    else:
+        raw_apply(effect=EFFECTS[effect], rgb=bytes.fromhex(color), speed=speed)
+    state.update(effect=effect, color=color, speed=speed)
+    save(state)
+
+
+def main(argv):
+    state = load()
+    cmd = argv[0] if argv else ""
+    args = argv[1:]
+
+    if cmd == "status":
+        mode = "kernel module" if os.path.exists(MODULE_COLOR) else "hidraw"
+        if os.path.exists(LED):
+            with open(LED) as f:
+                state["brightness"] = int(f.read())
+        print(f"backend: {mode}; brightness {state['brightness']}; "
+              f"effect {state['effect']} {state['color']} speed {state['speed']}")
+    elif cmd == "brightness" and len(args) == 1 and args[0] in ("0", "1", "2", "3"):
+        level = int(args[0])
+        if os.path.exists(LED):
+            with open(LED, "w") as f:
+                f.write(str(level))
+        else:
+            raw_apply(brightness=level)
+        state["brightness"] = level
+        save(state)
+    elif cmd == "color" and len(args) == 1:
+        set_effect(state, "static", parse_color(args[0]), 2)
+    elif cmd == "effect" and args and args[0] in EFFECTS:
+        effect, rest = args[0], args[1:]
+        color = state.get("color", "ffffff")
+        if effect in COLOURED and rest and not rest[0].isdigit():
+            color = parse_color(rest.pop(0))
+        speed = int(rest[0]) if rest and rest[0] in ("1", "2", "3") else 2
+        set_effect(state, effect, color, speed)
+    elif cmd == "restore":
+        if os.path.exists(MODULE_COLOR):
+            return
+        raw_apply(brightness=state["brightness"], effect=EFFECTS[state["effect"]],
+                  rgb=bytes.fromhex(state["color"]), speed=state["speed"])
+    else:
+        sys.exit(__doc__.strip())
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

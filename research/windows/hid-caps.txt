@@ -1,0 +1,252 @@
+﻿== \\?\hid#vid_0b05&pid_8854&mi_01&col01#7&dc9d245&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=0B05 PID=8854 ver=0003 mfr='ASUSTeK Computer Inc.' product='N-KEY Device'
+  TLC UsagePage=0xFF31 Usage=0x0076 InLen=6 OutLen=0 FeatLen=64 LinkNodes=1
+    collection[0] page=0xFF31 usage=0x0076 parent=0 type=1
+    In-btn  rid=0x5A page=0xFF31 usage=0x0000-0x00FF link=0
+    Feat-btn  rid=0x5A page=0xFF31 usage=0x0000-0x00FF link=0
+
+== \\?\hid#asup1413&col01#5&2940a42&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  (cannot open)
+
+== \\?\hid#vid_0b05&pid_8854&mi_01&col02#7&dc9d245&0&0001#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=0B05 PID=8854 ver=0003 mfr='ASUSTeK Computer Inc.' product='N-KEY Device'
+  TLC UsagePage=0xFF89 Usage=0x0010 InLen=0 OutLen=0 FeatLen=33 LinkNodes=1
+    collection[0] page=0xFF89 usage=0x0010 parent=0 type=1
+    Feat-btn  rid=0x5B page=0xFF89 usage=0x0001 link=0
+
+== \\?\hid#asup1413&col02#5&2940a42&0&0001#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=093A PID=3F01 ver=0A2B mfr='Microsoft' product='HIDI2C Device'
+  TLC UsagePage=0x000D Usage=0x0005 InLen=30 OutLen=0 FeatLen=257 LinkNodes=3
+    collection[0] page=0x000D usage=0x0005 parent=0 type=1
+    collection[1] page=0x000D usage=0x0022 parent=0 type=2
+    collection[2] page=0x000E usage=0x0001 parent=0 type=2
+    In-btn  rid=0x04 page=0x000D usage=0x0042 link=1
+    In-btn  rid=0x04 page=0x000D usage=0x0047 link=1
+    In-btn  rid=0x04 page=0x0009 usage=0x0001 link=0
+    In-val  rid=0x04 page=0x000D usage=0x0051 bits=4x1 logical=[0,15] link=1
+    In-val  rid=0x04 page=0x0001 usage=0x0030 bits=16x1 logical=[0,4635] link=1
+    In-val  rid=0x04 page=0x0001 usage=0x0031 bits=16x1 logical=[0,2745] link=1
+    In-val  rid=0x04 page=0x000D usage=0x0056 bits=16x1 logical=[0,65535] link=0
+    In-val  rid=0x04 page=0x000D usage=0x0054 bits=8x1 logical=[0,5] link=0
+    In-val  rid=0x04 page=0xFF00 usage=0x0024 bits=7x1 logical=[0,127] link=0
+    In-val  rid=0x04 page=0xFF00 usage=0x0025 bits=32x1 logical=[0,65535] link=0
+    In-val  rid=0x04 page=0xFF00 usage=0x0026 bits=16x1 logical=[0,-1] link=0
+    In-val  rid=0x04 page=0xFF00 usage=0x0027 bits=16x1 logical=[0,-1] link=0
+    In-val  rid=0x04 page=0xFF00 usage=0x0028 bits=32x1 logical=[0,65535] link=0
+    In-val  rid=0x04 page=0xFF00 usage=0x0029 bits=32x1 logical=[0,65535] link=0
+    In-val  rid=0x04 page=0xFF00 usage=0x002A bits=32x1 logical=[0,65535] link=0
+    Feat-btn  rid=0x07 page=0x000D usage=0x0060 link=0
+    Feat-val  rid=0x02 page=0x000D usage=0x0055 bits=8x1 logical=[0,5] link=0
+    Feat-val  rid=0x06 page=0x000D usage=0x0059 bits=8x1 logical=[0,2] link=0
+    Feat-val  rid=0x0B page=0xFF00 usage=0x00C5 bits=8x256 logical=[0,255] link=0
+    Feat-val  rid=0x09 page=0x000E usage=0x0023 bits=8x1 logical=[0,100] link=2
+    Feat-val  rid=0x0D page=0xFF00 usage=0x00C4 bits=32x1 logical=[0,65535] link=0
+
+== \\?\hid#vid_0b05&pid_8854&mi_01&col03#7&dc9d245&0&0002#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=0B05 PID=8854 ver=0003 mfr='ASUSTeK Computer Inc.' product='N-KEY Device'
+  TLC UsagePage=0x000C Usage=0x0001 InLen=5 OutLen=0 FeatLen=0 LinkNodes=1
+    collection[0] page=0x000C usage=0x0001 parent=0 type=1
+    In-btn  rid=0x02 page=0x000C usage=0x0000-0x023C link=0
+
+== \\?\hid#asus2020&col01#5&2741eeba&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=0B05 PID=0220 ver=0000 mfr='Microsoft' product='HIDI2C Device'
+  TLC UsagePage=0x0001 Usage=0x000E InLen=4 OutLen=0 FeatLen=3 LinkNodes=4
+    collection[0] page=0x0001 usage=0x000E parent=0 type=1
+    collection[1] page=0x000D usage=0x0021 parent=0 type=2
+    collection[2] page=0x000D usage=0x0000 parent=1 type=0
+    collection[3] page=0x0009 usage=0x0000 parent=2 type=2
+    In-btn  rid=0x01 page=0x0009 usage=0x0001 link=2
+    In-val  rid=0x01 page=0x0001 usage=0x0037 bits=16x1 logical=[-3600,3600] link=3
+    Feat-val  rid=0x01 page=0x0001 usage=0x0048 bits=16x1 logical=[0,3600] link=3
+
+== \\?\hid#asus2020&col02#5&2741eeba&0&0001#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=0B05 PID=0220 ver=0000 mfr='Microsoft' product='HIDI2C Device'
+  TLC UsagePage=0xFFC0 Usage=0x000E InLen=4 OutLen=0 FeatLen=13 LinkNodes=1
+    collection[0] page=0xFFC0 usage=0x000E parent=0 type=1
+    In-btn  rid=0x0A page=0xFFC0 usage=0x0000-0x00FF link=0
+    Feat-btn  rid=0x0A page=0xFFC0 usage=0x0000-0x00FF link=0
+
+== \\?\hid#asup1413&col03#5&2940a42&0&0002#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=093A PID=3F01 ver=0A2B mfr='Microsoft' product='HIDI2C Device'
+  TLC UsagePage=0x000D Usage=0x000E InLen=0 OutLen=0 FeatLen=2 LinkNodes=3
+    collection[0] page=0x000D usage=0x000E parent=0 type=1
+    collection[1] page=0x000D usage=0x0022 parent=0 type=2
+    collection[2] page=0x000D usage=0x0022 parent=0 type=0
+    Feat-btn  rid=0x05 page=0x000D usage=0x0058 link=2
+    Feat-btn  rid=0x05 page=0x000D usage=0x0057 link=2
+    Feat-val  rid=0x03 page=0x000D usage=0x0052 bits=8x1 logical=[0,10] link=1
+
+== \\?\hid#asus2020&col03#5&2741eeba&0&0002#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=0B05 PID=0220 ver=0000 mfr='Microsoft' product='HIDI2C Device'
+  TLC UsagePage=0xFFC1 Usage=0x000E InLen=20 OutLen=0 FeatLen=5 LinkNodes=1
+    collection[0] page=0xFFC1 usage=0x000E parent=0 type=1
+    In-btn  rid=0x0D page=0xFFC1 usage=0x0000-0x00FF link=0
+    Feat-btn  rid=0x0D page=0xFFC1 usage=0x0000-0x00FF link=0
+
+== \\?\hid#vid_0b05&pid_8854&mi_01&col04#7&dc9d245&0&0003#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=0B05 PID=8854 ver=0003 mfr='ASUSTeK Computer Inc.' product='N-KEY Device'
+  TLC UsagePage=0xFF31 Usage=0x0077 InLen=32 OutLen=64 FeatLen=64 LinkNodes=1
+    collection[0] page=0xFF31 usage=0x0077 parent=0 type=1
+    In-btn  rid=0x5C page=0xFF31 usage=0x0000-0x00FF link=0
+    Out-btn  rid=0x5C page=0xFF31 usage=0x0000-0x00FF link=0
+    Feat-btn  rid=0x5C page=0xFF31 usage=0x0000-0x00FF link=0
+
+== \\?\hid#vid_8087&pid_0ac2#6&24876fed&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=0000 PID=0000 ver=0000 mfr='' product=''
+  (no preparsed data)
+
+== \\?\hid#elan9008&col01#5&2bed5342&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=04F3 PID=2F64 ver=6113 mfr='Microsoft' product='HIDI2C Device'
+  TLC UsagePage=0x000D Usage=0x0004 InLen=61 OutLen=0 FeatLen=257 LinkNodes=6
+    collection[0] page=0x000D usage=0x0004 parent=0 type=1
+    collection[1] page=0x000D usage=0x0022 parent=0 type=2
+    collection[2] page=0x000D usage=0x0022 parent=0 type=2
+    collection[3] page=0x000D usage=0x0022 parent=0 type=2
+    collection[4] page=0x000D usage=0x0022 parent=0 type=2
+    collection[5] page=0x000D usage=0x0022 parent=0 type=2
+    In-btn  rid=0x01 page=0x000D usage=0x0042 link=1
+    In-btn  rid=0x01 page=0x000D usage=0x0042 link=2
+    In-btn  rid=0x01 page=0x000D usage=0x0042 link=3
+    In-btn  rid=0x01 page=0x000D usage=0x0042 link=4
+    In-btn  rid=0x01 page=0x000D usage=0x0042 link=5
+    In-val  rid=0x01 page=0x000D usage=0x0051 bits=6x1 logical=[0,63] link=1
+    In-val  rid=0x01 page=0x000D usage=0x0048 bits=8x1 logical=[0,255] link=1
+    In-val  rid=0x01 page=0x000D usage=0x0049 bits=8x1 logical=[0,255] link=1
+    In-val  rid=0x01 page=0x0001 usage=0x0030 bits=16x2 logical=[0,4980] link=1
+    In-val  rid=0x01 page=0x0001 usage=0x0031 bits=16x2 logical=[0,2820] link=1
+    In-val  rid=0x01 page=0x000D usage=0x0051 bits=6x1 logical=[0,63] link=2
+    In-val  rid=0x01 page=0x000D usage=0x0048 bits=8x1 logical=[0,255] link=2
+    In-val  rid=0x01 page=0x000D usage=0x0049 bits=8x1 logical=[0,255] link=2
+    In-val  rid=0x01 page=0x0001 usage=0x0030 bits=16x2 logical=[0,4980] link=2
+    In-val  rid=0x01 page=0x0001 usage=0x0031 bits=16x2 logical=[0,2820] link=2
+    In-val  rid=0x01 page=0x000D usage=0x0051 bits=6x1 logical=[0,63] link=3
+    In-val  rid=0x01 page=0x000D usage=0x0048 bits=8x1 logical=[0,255] link=3
+    In-val  rid=0x01 page=0x000D usage=0x0049 bits=8x1 logical=[0,255] link=3
+    In-val  rid=0x01 page=0x0001 usage=0x0030 bits=16x2 logical=[0,4980] link=3
+    In-val  rid=0x01 page=0x0001 usage=0x0031 bits=16x2 logical=[0,2820] link=3
+    In-val  rid=0x01 page=0x000D usage=0x0051 bits=6x1 logical=[0,63] link=4
+    In-val  rid=0x01 page=0x000D usage=0x0048 bits=8x1 logical=[0,255] link=4
+    In-val  rid=0x01 page=0x000D usage=0x0049 bits=8x1 logical=[0,255] link=4
+    In-val  rid=0x01 page=0x0001 usage=0x0030 bits=16x2 logical=[0,4980] link=4
+    In-val  rid=0x01 page=0x0001 usage=0x0031 bits=16x2 logical=[0,2820] link=4
+    In-val  rid=0x01 page=0x000D usage=0x0051 bits=6x1 logical=[0,63] link=5
+    In-val  rid=0x01 page=0x000D usage=0x0048 bits=8x1 logical=[0,255] link=5
+    In-val  rid=0x01 page=0x000D usage=0x0049 bits=8x1 logical=[0,255] link=5
+    In-val  rid=0x01 page=0x0001 usage=0x0030 bits=16x2 logical=[0,4980] link=5
+    In-val  rid=0x01 page=0x0001 usage=0x0031 bits=16x2 logical=[0,2820] link=5
+    In-val  rid=0x01 page=0x000D usage=0x0056 bits=32x1 logical=[0,2147483647] link=0
+    In-val  rid=0x01 page=0x000D usage=0x0054 bits=8x1 logical=[0,127] link=0
+    Feat-val  rid=0x0A page=0x000D usage=0x0055 bits=8x1 logical=[0,10] link=0
+    Feat-val  rid=0x44 page=0xFF00 usage=0x00C5 bits=8x256 logical=[0,255] link=0
+
+== \\?\hid#elan9008&col02#5&2bed5342&0&0001#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=04F3 PID=2F64 ver=6113 mfr='Microsoft' product='HIDI2C Device'
+  TLC UsagePage=0x01FF Usage=0x0001 InLen=65 OutLen=0 FeatLen=0 LinkNodes=1
+    collection[0] page=0x01FF usage=0x0001 parent=0 type=1
+    In-val  rid=0x02 page=0x01FF usage=0x0000 bits=8x64 logical=[0,255] link=0
+
+== \\?\hid#vid_0b05&pid_8854&mi_00#7&160d6b7d&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}\kbd
+  VID=0B05 PID=8854 ver=0003 mfr='ASUSTeK Computer Inc.' product='N-KEY Device'
+  TLC UsagePage=0x0001 Usage=0x0006 InLen=33 OutLen=2 FeatLen=0 LinkNodes=1
+    collection[0] page=0x0001 usage=0x0006 parent=0 type=1
+    In-btn  rid=0x01 page=0x0007 usage=0x00E0-0x00E7 link=0
+    In-btn  rid=0x01 page=0x0007 usage=0x0000-0x00FF link=0
+    Out-btn  rid=0x01 page=0x0008 usage=0x0001-0x0005 link=0
+
+== \\?\hid#elan9008&col03#5&2bed5342&0&0002#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=04F3 PID=2F64 ver=6113 mfr='Microsoft' product='HIDI2C Device'
+  TLC UsagePage=0xFF00 Usage=0x0001 InLen=0 OutLen=33 FeatLen=0 LinkNodes=1
+    collection[0] page=0xFF00 usage=0x0001 parent=0 type=1
+    Out-val  rid=0x03 page=0xFF00 usage=0x0001 bits=8x32 logical=[0,255] link=0
+
+== \\?\hid#elan9008&col04#5&2bed5342&0&0003#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=04F3 PID=2F64 ver=6113 mfr='Microsoft' product='HIDI2C Device'
+  TLC UsagePage=0xFF00 Usage=0x0001 InLen=0 OutLen=19 FeatLen=4 LinkNodes=1
+    collection[0] page=0xFF00 usage=0x0001 parent=0 type=1
+    Out-val  rid=0x06 page=0xFF00 usage=0x0003 bits=8x18 logical=[0,255] link=0
+    Feat-val  rid=0x06 page=0xFF00 usage=0x0004 bits=8x3 logical=[0,255] link=0
+
+== \\?\hid#elan9008&col05#5&2bed5342&0&0004#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=04F3 PID=2F64 ver=6113 mfr='Microsoft' product='HIDI2C Device'
+  TLC UsagePage=0xFF01 Usage=0x0001 InLen=20 OutLen=0 FeatLen=0 LinkNodes=1
+    collection[0] page=0xFF01 usage=0x0001 parent=0 type=1
+    In-val  rid=0x04 page=0xFF01 usage=0x0000 bits=8x19 logical=[0,255] link=0
+
+== \\?\hid#elan9008&col06#5&2bed5342&0&0005#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=04F3 PID=2F64 ver=6113 mfr='Microsoft' product='HIDI2C Device'
+  TLC UsagePage=0x000D Usage=0x0002 InLen=65 OutLen=0 FeatLen=0 LinkNodes=2
+    collection[0] page=0x000D usage=0x0002 parent=0 type=1
+    collection[1] page=0x000D usage=0x0020 parent=0 type=0
+    In-btn  rid=0x07 page=0x000D usage=0x0045 link=1
+    In-btn  rid=0x07 page=0x000D usage=0x003C link=1
+    In-btn  rid=0x07 page=0x000D usage=0x0044 link=1
+    In-btn  rid=0x07 page=0x000D usage=0x0042 link=1
+    In-btn  rid=0x07 page=0x000D usage=0x0032 link=1
+    In-val  rid=0x07 page=0x0001 usage=0x0030 bits=16x1 logical=[0,21248] link=1
+    In-val  rid=0x07 page=0x0001 usage=0x0031 bits=16x1 logical=[0,12032] link=1
+    In-val  rid=0x07 page=0x000D usage=0x0030 bits=16x1 logical=[0,4096] link=1
+    In-val  rid=0x07 page=0x000D usage=0x003B bits=8x1 logical=[0,100] link=1
+    In-val  rid=0x07 page=0x000D usage=0x003D bits=16x1 logical=[-9000,9000] link=1
+    In-val  rid=0x07 page=0x000D usage=0x003E bits=16x1 logical=[-9000,9000] link=1
+    In-val  rid=0x07 page=0x000D usage=0x003F bits=16x1 logical=[0,36000] link=1
+    In-val  rid=0x07 page=0xFF00 usage=0x0080 bits=8x50 logical=[0,100] link=1
+
+== \\?\hid#vid_8087&pid_0ac2#6&37412092&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=0000 PID=0000 ver=0000 mfr='' product=''
+  (no preparsed data)
+
+== \\?\hid#elan9008&col0a#5&2bed5342&0&0009#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=04F3 PID=2F64 ver=6113 mfr='Microsoft' product='HIDI2C Device'
+  TLC UsagePage=0xFF0F Usage=0x0050 InLen=17 OutLen=0 FeatLen=0 LinkNodes=1
+    collection[0] page=0xFF0F usage=0x0050 parent=0 type=1
+    In-val  rid=0x22 page=0xFF0F usage=0x0072 bits=32x1 logical=[-2147483648,2147483647] link=0
+    In-val  rid=0x22 page=0xFF0F usage=0x0073 bits=32x1 logical=[-2147483648,2147483647] link=0
+    In-val  rid=0x22 page=0xFF0F usage=0x0074 bits=32x1 logical=[-2147483648,2147483647] link=0
+    In-val  rid=0x22 page=0xFF0F usage=0x0075 bits=32x1 logical=[-2147483648,2147483647] link=0
+
+== \\?\hid#elan9008&col07#5&2bed5342&0&0006#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=04F3 PID=2F64 ver=6113 mfr='Microsoft' product='HIDI2C Device'
+  TLC UsagePage=0xFF00 Usage=0x0081 InLen=65 OutLen=0 FeatLen=0 LinkNodes=1
+    collection[0] page=0xFF00 usage=0x0081 parent=0 type=1
+    In-val  rid=0x17 page=0xFF00 usage=0x0005 bits=8x64 logical=[0,100] link=0
+
+== \\?\hid#asup1413&col04#5&2940a42&0&0003#{4d1e55b2-f16f-11cf-88cb-001111000030}\kbd
+  (cannot open)
+
+== \\?\hid#asup1413&col05#5&2940a42&0&0004#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=093A PID=3F01 ver=0A2B mfr='Microsoft' product='HIDI2C Device'
+  TLC UsagePage=0xFF00 Usage=0x0001 InLen=0 OutLen=0 FeatLen=257 LinkNodes=1
+    collection[0] page=0xFF00 usage=0x0001 parent=0 type=1
+    Feat-val  rid=0x42 page=0xFF00 usage=0x00C4 bits=8x3 logical=[0,255] link=0
+    Feat-val  rid=0x43 page=0xFF00 usage=0x00C4 bits=8x3 logical=[0,255] link=0
+    Feat-val  rid=0x41 page=0xFF00 usage=0x0005 bits=8x256 logical=[0,255] link=0
+    Feat-val  rid=0x52 page=0xFF00 usage=0x00C4 bits=8x4 logical=[0,255] link=0
+    Feat-val  rid=0x51 page=0xFF00 usage=0x0005 bits=8x18 logical=[0,255] link=0
+
+== \\?\hid#elan9008&col08#5&2bed5342&0&0007#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=04F3 PID=2F64 ver=6113 mfr='Microsoft' product='HIDI2C Device'
+  TLC UsagePage=0xFF0B Usage=0x000B InLen=7488 OutLen=0 FeatLen=511 LinkNodes=1
+    collection[0] page=0xFF0B usage=0x000B parent=0 type=1
+    In-val  rid=0x2E page=0xFF0B usage=0x002E bits=8x15 logical=[0,255] link=0
+    In-val  rid=0x2F page=0xFF0B usage=0x002F bits=8x31 logical=[0,255] link=0
+    In-val  rid=0x30 page=0xFF0B usage=0x0030 bits=8x62 logical=[0,255] link=0
+    In-val  rid=0x31 page=0xFF0B usage=0x0031 bits=8x254 logical=[0,255] link=0
+    In-val  rid=0x32 page=0xFF0B usage=0x0032 bits=8x510 logical=[0,255] link=0
+    In-val  rid=0x33 page=0xFF0B usage=0x0033 bits=8x1022 logical=[0,255] link=0
+    In-val  rid=0x34 page=0xFF0B usage=0x0034 bits=8x2046 logical=[0,255] link=0
+    In-val  rid=0x35 page=0xFF0B usage=0x0035 bits=8x4094 logical=[0,255] link=0
+    In-val  rid=0x36 page=0xFF0B usage=0x0036 bits=8x7487 logical=[0,255] link=0
+    Feat-val  rid=0x48 page=0xFF0B usage=0x0048 bits=8x2 logical=[0,255] link=0
+    Feat-val  rid=0x29 page=0xFF0B usage=0x0029 bits=8x15 logical=[0,255] link=0
+    Feat-val  rid=0x2A page=0xFF0B usage=0x002A bits=8x31 logical=[0,255] link=0
+    Feat-val  rid=0x2B page=0xFF0B usage=0x002B bits=8x62 logical=[0,255] link=0
+    Feat-val  rid=0x2C page=0xFF0B usage=0x002C bits=8x254 logical=[0,255] link=0
+    Feat-val  rid=0x2D page=0xFF0B usage=0x002D bits=8x510 logical=[0,255] link=0
+
+== \\?\hid#elan9008&col09#5&2bed5342&0&0008#{4d1e55b2-f16f-11cf-88cb-001111000030}
+  VID=04F3 PID=2F64 ver=6113 mfr='Microsoft' product='HIDI2C Device'
+  TLC UsagePage=0xFF0F Usage=0x0060 InLen=5 OutLen=5 FeatLen=0 LinkNodes=1
+    collection[0] page=0xFF0F usage=0x0060 parent=0 type=1
+    In-val  rid=0x19 page=0xFF0F usage=0x00C6 bits=8x4 logical=[0,255] link=0
+    Out-val  rid=0x19 page=0xFF0F usage=0x0000 bits=8x4 logical=[0,255] link=0
+

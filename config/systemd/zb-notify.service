@@ -1,0 +1,12 @@
+[Unit]
+Description=ASUS UX7602 notifications (camera privacy, Dial mode)
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+ExecStart=/usr/local/bin/zb-notify
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target

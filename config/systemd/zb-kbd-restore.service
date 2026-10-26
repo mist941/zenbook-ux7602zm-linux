@@ -1,0 +1,7 @@
+[Unit]
+Description=ASUS UX7602 keyboard: restore backlight (only without the asus_ux7602 module)
+ConditionPathExists=!/sys/devices/platform/asus_ux7602
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/zb-kbd restore

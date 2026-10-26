@@ -1,0 +1,96 @@
+#!/usr/bin/python3 -I
+"""Userspace fallback for the ASUS Dial (I2C HID 0B05:0220), used only when the
+asus_ux7602 kernel module is not installed.
+
+The kernel creates no input device for the Dial's "System Multi-Axis"
+collection, so read its reports from hidraw (01 <button> <delta lo> <delta hi>)
+and replay them as key presses through uinput.
+
+Usage: zb-dial [--mode volume|brightness|media] [--pressed volume|brightness|media]
+Rotate = mode action, rotate while pressed = --pressed action, click = mute /
+play-pause.
+"""
+import argparse
+import fcntl
+import glob
+import os
+import struct
+import sys
+import time
+
+EV_SYN, EV_KEY = 0x00, 0x01
+KEY_MUTE, KEY_VOLUMEDOWN, KEY_VOLUMEUP = 113, 114, 115
+KEY_NEXTSONG, KEY_PLAYPAUSE, KEY_PREVIOUSSONG = 163, 164, 165
+KEY_BRIGHTNESSDOWN, KEY_BRIGHTNESSUP = 224, 225
+ACTIONS = {
+    "volume": (KEY_VOLUMEUP, KEY_VOLUMEDOWN, KEY_MUTE),
+    "brightness": (KEY_BRIGHTNESSUP, KEY_BRIGHTNESSDOWN, None),
+    "media": (KEY_NEXTSONG, KEY_PREVIOUSSONG, KEY_PLAYPAUSE),
+}
+
+UI_SET_EVBIT, UI_SET_KEYBIT = 0x40045564, 0x40045565
+UI_DEV_SETUP, UI_DEV_CREATE = 0x405C5503, 0x5501
+
+
+def hidraw_node():
+    for _ in range(30):
+        nodes = glob.glob("/sys/bus/hid/devices/0018:0B05:0220.*/hidraw/hidraw*")
+        if nodes:
+            return "/dev/" + os.path.basename(nodes[0])
+        time.sleep(1)
+    sys.exit("zb-dial: ASUS Dial 0B05:0220 not found")
+
+
+class Uinput:
+    def __init__(self):
+        self.fd = os.open("/dev/uinput", os.O_WRONLY | os.O_NONBLOCK)
+        fcntl.ioctl(self.fd, UI_SET_EVBIT, EV_KEY)
+        for keys in ACTIONS.values():
+            for key in keys:
+                if key:
+                    fcntl.ioctl(self.fd, UI_SET_KEYBIT, key)
+        setup = struct.pack("HHHH80sI", 0x18, 0x0B05, 0x0220, 1, b"ASUS Dial (userspace)", 0)
+        fcntl.ioctl(self.fd, UI_DEV_SETUP, setup)
+        fcntl.ioctl(self.fd, UI_DEV_CREATE)
+
+    def emit(self, etype, code, value):
+        os.write(self.fd, struct.pack("llHHi", 0, 0, etype, code, value))
+
+    def tap(self, key):
+        for value in (1, 0):
+            self.emit(EV_KEY, key, value)
+            self.emit(EV_SYN, 0, 0)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mode", choices=ACTIONS, default="volume")
+    parser.add_argument("--pressed", choices=ACTIONS, default="brightness")
+    args = parser.parse_args()
+
+    if os.path.isdir("/sys/devices/platform/asus_ux7602"):
+        sys.exit("zb-dial: the asus_ux7602 module already drives the Dial")
+    out = Uinput()
+    fd = os.open(hidraw_node(), os.O_RDONLY)
+    pressed = rotated = False
+    while True:
+        data = os.read(fd, 64)
+        if len(data) < 4 or data[0] != 0x01:
+            continue
+        now_pressed = bool(data[1] & 1)
+        delta = struct.unpack_from("<h", data, 2)[0]
+        if delta:
+            up, down, _ = ACTIONS[args.pressed if now_pressed else args.mode]
+            rotated |= now_pressed
+            for _ in range(abs(delta)):
+                out.tap(up if delta > 0 else down)
+        if pressed and not now_pressed:
+            click = ACTIONS[args.mode][2]
+            if click and not rotated:
+                out.tap(click)
+            rotated = False
+        pressed = now_pressed
+
+
+if __name__ == "__main__":
+    main()

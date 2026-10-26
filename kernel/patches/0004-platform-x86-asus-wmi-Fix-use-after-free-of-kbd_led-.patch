@@ -1,0 +1,63 @@
+From a73911bc00ca932a53389a079af79e1322e662c0 Mon Sep 17 00:00:00 2001
+From: Your Name <you@example.com>
+Date: Sun, 25 Oct 2026 07:14:41 -1200
+Subject: [PATCH 4/4] platform/x86: asus-wmi: Fix use-after-free of kbd_led on
+ removal
+
+Since the keyboard backlight LED is registered from kbd_led_work, it goes
+through devm_led_classdev_register() on the platform device. The LED is
+embedded in struct asus_wmi, which asus_wmi_remove() frees with kfree()
+before the driver core releases the device's devres, so the LED core then
+unregisters an LED that lives in freed memory. Unloading asus-nb-wmi after
+a keyboard backlight listener made asus-wmi register the LED:
+
+  BUG: kernel NULL pointer dereference, address: 0000000000000008
+  RIP: 0010:led_classdev_unregister+0x95/0xf0
+  Call Trace:
+   release_nodes+0x3a/0x60
+   devres_release_all+0x86/0xc0
+   device_unbind_cleanup+0x21/0xa0
+   device_release_driver_internal+0x1bf/0x200
+   bus_remove_device+0xdb/0x170
+   device_del+0x15d/0x4a0
+   platform_device_del.part.0+0xe/0x70
+   platform_device_unregister+0x1b/0x30
+   asus_wmi_unregister_driver+0x2c/0x50 [asus_wmi]
+   __do_sys_delete_module+0x1cc/0x2c0
+
+Register the LED with led_classdev_register() and unregister it in
+asus_wmi_led_exit(), after the workqueue that registers it is destroyed.
+
+Fixes: fac55d29581f ("platform/x86: asus-wmi: Add support for multiple kbd led handlers")
+---
+ drivers/platform/x86/asus-wmi.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/platform/x86/asus-wmi.c b/drivers/platform/x86/asus-wmi.c
+index 6914f3cb0..6aacca85b 100644
+--- a/drivers/platform/x86/asus-wmi.c
++++ b/drivers/platform/x86/asus-wmi.c
+@@ -1817,8 +1817,7 @@ static void kbd_led_update_all(struct work_struct *work)
+ 		 * Therefore, we can safely register the LED without holding
+ 		 * a spinlock.
+ 		 */
+-		ret = devm_led_classdev_register(&asus->platform_device->dev,
+-						 &asus->kbd_led);
++		ret = led_classdev_register(&asus->platform_device->dev, &asus->kbd_led);
+ 		if (!ret) {
+ 			scoped_guard(spinlock_irqsave, &asus_ref.lock)
+ 				asus->kbd_led_registered = true;
+@@ -2132,6 +2131,10 @@ static void asus_wmi_led_exit(struct asus_wmi *asus)
+ 
+ 	if (asus->led_workqueue)
+ 		destroy_workqueue(asus->led_workqueue);
++
++	/* kbd_led is registered from that workqueue, so it is settled only now */
++	if (asus->kbd_led_registered)
++		led_classdev_unregister(&asus->kbd_led);
+ }
+ 
+ static int asus_wmi_led_init(struct asus_wmi *asus)
+-- 
+2.43.0
+

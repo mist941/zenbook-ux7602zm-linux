@@ -1,0 +1,11 @@
+[Unit]
+Description=ASUS Dial userspace driver (only without the asus_ux7602 module)
+ConditionPathExists=!/sys/devices/platform/asus_ux7602
+
+[Service]
+ExecStart=/usr/local/sbin/zb-dial --mode volume --pressed brightness
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

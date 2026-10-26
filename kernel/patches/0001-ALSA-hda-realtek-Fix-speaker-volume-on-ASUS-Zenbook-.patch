@@ -1,0 +1,37 @@
+From abbb4d2bf56be8b0a3a736f9416c361a222c48d5 Mon Sep 17 00:00:00 2001
+From: Your Name <you@example.com>
+Date: Sun, 25 Oct 2026 07:14:40 -1200
+Subject: [PATCH 1/4] ALSA: hda/realtek: Fix speaker volume on ASUS Zenbook
+ UX7602ZM
+
+The UX7602ZM (Zenbook Pro 16X OLED, PCI SSID 1043:1f62) has two speaker
+pairs on an ALC285, the second one driven through two CS35L41 amps on
+SPI. With ALC245_FIXUP_CS35L41_SPI_2 the generic parser routes the
+"Speaker" pin 0x14 to DAC 0x02 and the "Bass Speaker" pin 0x17 to DAC
+0x06, which has no amp volume. The volume slider therefore only scales
+one pair: turning it up mostly makes the treble louder while the bass
+pair stays at full level.
+
+Use ALC285_FIXUP_ASUS_SPEAKER2_TO_DAC1, which routes pin 0x17 to DAC
+0x02 and then applies the same CS35L41 SPI fixup, as on other ASUS
+models with this layout.
+---
+ sound/hda/codecs/realtek/alc269.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sound/hda/codecs/realtek/alc269.c b/sound/hda/codecs/realtek/alc269.c
+index 23aa175fa..507485bfd 100644
+--- a/sound/hda/codecs/realtek/alc269.c
++++ b/sound/hda/codecs/realtek/alc269.c
+@@ -8232,7 +8232,7 @@ static const struct hda_quirk alc269_fixup_tbl[] = {
+ 	SND_PCI_QUIRK(0x1043, 0x1f11, "ASUS Zephyrus G14", ALC289_FIXUP_ASUS_GA401),
+ 	SND_PCI_QUIRK(0x1043, 0x1f12, "ASUS UM5302", ALC287_FIXUP_CS35L41_I2C_2),
+ 	SND_PCI_QUIRK(0x1043, 0x1f1f, "ASUS H7604JI/JV/J3D", ALC245_FIXUP_CS35L41_SPI_2),
+-	SND_PCI_QUIRK(0x1043, 0x1f62, "ASUS UX7602ZM", ALC245_FIXUP_CS35L41_SPI_2),
++	SND_PCI_QUIRK(0x1043, 0x1f62, "ASUS UX7602ZM", ALC285_FIXUP_ASUS_SPEAKER2_TO_DAC1),
+ 	SND_PCI_QUIRK(0x1043, 0x1f63, "ASUS P5405CSA", ALC245_FIXUP_CS35L41_SPI_2),
+ 	SND_PCI_QUIRK(0x1043, 0x1f92, "ASUS ROG Flow X16", ALC289_FIXUP_ASUS_GA401),
+ 	SND_PCI_QUIRK(0x1043, 0x1fb3, "ASUS ROG Flow Z13 GZ302EA", ALC287_FIXUP_CS35L41_I2C_2),
+-- 
+2.43.0
+

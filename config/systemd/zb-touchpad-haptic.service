@@ -1,0 +1,6 @@
+[Unit]
+Description=ASUS UX7602 touchpad: restore haptic click strength
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/zb-touchpad restore

@@ -1,0 +1,71 @@
+#!/usr/bin/python3 -I
+"""Desktop notifications for the asus_ux7602 module (run in the user session).
+
+Shows a notification when Fn+F10 blocks/unblocks the webcam and when the
+ASUS Dial switches mode. The module signals both through sysfs_notify().
+"""
+import os
+import select
+import shutil
+import subprocess
+import time
+
+BASE = "/sys/devices/platform/asus_ux7602"
+UK = os.environ.get("LANG", "").startswith("uk")
+TEXT = {
+    "cam_off": "Камеру вимкнено" if UK else "Camera disabled",
+    "cam_on": "Камеру увімкнено" if UK else "Camera enabled",
+    "dial": "ASUS Dial" if not UK else "ASUS Dial — режим",
+}
+
+
+def notify(title, icon):
+    if shutil.which("notify-send"):
+        subprocess.run(["notify-send", "-a", "Zenbook", "-i", icon,
+                        "-h", "string:x-canonical-private-synchronous:zenbook", title])
+    elif shutil.which("gdbus"):
+        subprocess.run(["gdbus", "call", "--session", "--dest", "org.freedesktop.Notifications",
+                        "--object-path", "/org/freedesktop/Notifications",
+                        "--method", "org.freedesktop.Notifications.Notify",
+                        "Zenbook", "0", icon, title, "", "[]", "{}", "3000"],
+                       stdout=subprocess.DEVNULL)
+
+
+def read(f):
+    f.seek(0)
+    return f.read().strip()
+
+
+def main():
+    while not os.path.isdir(BASE):
+        time.sleep(5)
+
+    watched = {}
+    poller = select.poll()
+    for name in ("camera_blocked", "dial_mode"):
+        path = f"{BASE}/{name}"
+        if os.path.exists(path):
+            f = open(path)
+            watched[f.fileno()] = (name, f, read(f))
+            poller.register(f, select.POLLPRI | select.POLLERR)
+
+    while watched:
+        for fd, _ in poller.poll():
+            name, f, old = watched[fd]
+            try:
+                value = read(f)
+            except OSError:
+                continue
+            if value == old:
+                continue
+            watched[fd] = (name, f, value)
+            if name == "camera_blocked":
+                blocked = value == "1"
+                notify(TEXT["cam_off"] if blocked else TEXT["cam_on"],
+                       "camera-disabled-symbolic" if blocked else "camera-web-symbolic")
+            else:
+                notify(f"{TEXT['dial']}: {value}", "input-dialpad-symbolic")
+
+
+if __name__ == "__main__":
+    main()

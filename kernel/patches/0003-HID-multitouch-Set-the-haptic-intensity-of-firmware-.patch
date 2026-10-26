@@ -1,0 +1,61 @@
+From 057fb6106920e5d34d0693345becfbe9f71e2235 Mon Sep 17 00:00:00 2001
+From: Your Name <you@example.com>
+Date: Sun, 25 Oct 2026 07:14:41 -1200
+Subject: [PATCH 3/4] HID: multitouch: Set the haptic intensity of
+ firmware-driven haptic touchpads
+
+Some haptic touchpads run the click detection and the actuator entirely
+in firmware and only expose the "Simple Haptic Controller / Intensity"
+feature (0x000e0023) to the host, without the auto/manual trigger
+reports hid-haptic needs. Windows writes the intensity on every boot and
+resume. The PixArt 093a:3f01 in the ASUS Zenbook UX7602 does not register
+clicks until it has been set, so the touchpad looks dead on Linux unless
+tap-to-click is enabled.
+
+Write a default intensity (module parameter, 50 by default, -1 leaves the
+device alone) together with the other feature values in mt_set_modes(),
+which runs on probe and resume. Touchpads handled by hid-haptic are not
+touched.
+---
+ drivers/hid/hid-multitouch.c | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/drivers/hid/hid-multitouch.c b/drivers/hid/hid-multitouch.c
+index 4e19a0c4d..94a5c8f85 100644
+--- a/drivers/hid/hid-multitouch.c
++++ b/drivers/hid/hid-multitouch.c
+@@ -1816,6 +1816,11 @@ static void mt_report(struct hid_device *hid, struct hid_report *report)
+ 		input_sync(field->hidinput->input);
+ }
+ 
++static int haptic_intensity = 50;
++module_param(haptic_intensity, int, 0644);
++MODULE_PARM_DESC(haptic_intensity,
++		 "Click strength for touchpads with firmware-driven haptics, 0-100 (-1 = leave as is)");
++
+ static bool mt_need_to_apply_feature(struct hid_device *hdev,
+ 				     struct hid_field *field,
+ 				     struct hid_usage *usage,
+@@ -1881,6 +1886,19 @@ static bool mt_need_to_apply_feature(struct hid_device *hdev,
+ 	case HID_DG_BUTTONSWITCH:
+ 		field->value[index] = !!(report_mode & TOUCHPAD_REPORT_BUTTONS);
+ 		return true;
++
++	case HID_HP_INTENSITY:
++		/*
++		 * Touchpads that run their haptics in firmware only expose the
++		 * intensity. Windows sets it on every boot and resume, and some
++		 * (PixArt 093a:3f01 in the ASUS UX7602) do not click until it is
++		 * set. Host-driven haptic touchpads are left to hid-haptic.
++		 */
++		if (td->is_haptic_touchpad || haptic_intensity < 0)
++			break;
++		field->value[index] = clamp(haptic_intensity, field->logical_minimum,
++					     field->logical_maximum);
++		return true;
+ 	}
+ 
+ 	return false; /* no need to update the report */
+-- 
+2.43.0
+

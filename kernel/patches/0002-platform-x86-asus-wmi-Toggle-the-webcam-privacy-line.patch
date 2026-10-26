@@ -1,0 +1,168 @@
+From dc48582f6297d1aef7ad54512c3c6666d330dd50 Mon Sep 17 00:00:00 2001
+From: Your Name <you@example.com>
+Date: Sun, 25 Oct 2026 07:14:41 -1200
+Subject: [PATCH 2/4] platform/x86: asus-wmi: Toggle the webcam privacy line on
+ Zenbook UX7602ZM
+
+On the Zenbook Pro 16X OLED (UX7602ZM, BIOS 303) the WMI device
+0x00060078 (ASUS_WMI_DEVID_CAMERA_LED_NEG) is GPIO 0x090E000F, "CLED" in
+the DSDT. Besides lighting the F10 key it drives the privacy input of the
+USB webcam (13d3:5280): with the line low the camera streams black frames
+and its UVC privacy control reads 1. The dedicated camera device
+0x00060013 is not implemented by this BIOS.
+
+Fn+F10 only raises WMI event 0x85; the ASUS service on Windows then flips
+the line through DEVS. On Linux nothing did, so the camera stayed in
+whatever state the firmware left it and Fn+F10 had no effect.
+
+Add a quirk for this model that flips the line on event 0x85 and reports
+the result as SW_CAMERA_LENS_COVER, like hp-wmi does for its camera
+shutter.
+---
+ drivers/platform/x86/asus-nb-wmi.c         | 13 ++++++
+ drivers/platform/x86/asus-wmi.c            | 49 ++++++++++++++++++++++
+ drivers/platform/x86/asus-wmi.h            |  2 +
+ include/linux/platform_data/x86/asus-wmi.h |  2 +-
+ 4 files changed, 65 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/platform/x86/asus-nb-wmi.c b/drivers/platform/x86/asus-nb-wmi.c
+index aeb461b16..9d54d0fba 100644
+--- a/drivers/platform/x86/asus-nb-wmi.c
++++ b/drivers/platform/x86/asus-nb-wmi.c
+@@ -150,6 +150,10 @@ static struct quirk_entry quirk_asus_zenbook_duo_kbd = {
+ 	.key_wlan_event = ASUS_WMI_KEY_IGNORE,
+ };
+ 
++static struct quirk_entry quirk_asus_camera_privacy_gpio = {
++	.camera_privacy_gpio = true,
++};
++
+ static struct quirk_entry quirk_asus_z13 = {
+ 	.key_wlan_event = ASUS_WMI_KEY_ARMOURY,
+ 	.tablet_switch_mode = asus_wmi_kbd_dock_devid,
+@@ -553,6 +557,15 @@ static const struct dmi_system_id asus_quirks[] = {
+ 		},
+ 		.driver_data = &quirk_asus_zenbook_duo_kbd,
+ 	},
++	{
++		.callback = dmi_matched,
++		.ident = "ASUS Zenbook Pro 16X UX7602ZM",
++		.matches = {
++			DMI_MATCH(DMI_SYS_VENDOR, "ASUSTeK COMPUTER INC."),
++			DMI_MATCH(DMI_PRODUCT_NAME, "UX7602ZM"),
++		},
++		.driver_data = &quirk_asus_camera_privacy_gpio,
++	},
+ 	{
+ 		.callback = dmi_matched,
+ 		.ident = "ASUS ROG Z13",
+diff --git a/drivers/platform/x86/asus-wmi.c b/drivers/platform/x86/asus-wmi.c
+index a65090429..6914f3cb0 100644
+--- a/drivers/platform/x86/asus-wmi.c
++++ b/drivers/platform/x86/asus-wmi.c
+@@ -63,6 +63,7 @@ module_param(fnlock_default, bool, 0444);
+ #define NOTIFY_BRNDOWN_MAX		0x2e
+ #define NOTIFY_FNLOCK_TOGGLE		0x4e
+ #define NOTIFY_KBD_DOCK_CHANGE		0x75
++#define NOTIFY_CAMERA_TOGGLE		0x85
+ #define NOTIFY_KBD_BRTUP		0xc4
+ #define NOTIFY_KBD_BRTDWN		0xc5
+ #define NOTIFY_KBD_BRTTOGGLE		0xc7
+@@ -724,6 +725,39 @@ static void asus_wmi_tablet_sw_init(struct asus_wmi *asus, u32 dev_id, int event
+ 	}
+ }
+ 
++/*
++ * On the UX7602ZM, ASUS_WMI_DEVID_CAMERA_LED_NEG is a GPIO that drives both
++ * the F10 LED and the webcam's privacy input (0 = blocked, 1 = available).
++ * The firmware only reports Fn+F10; flipping the line is left to the OS.
++ */
++static int asus_wmi_camera_privacy_get(struct asus_wmi *asus)
++{
++	u32 result;
++	int err;
++
++	err = asus_wmi_get_devstate(asus, ASUS_WMI_DEVID_CAMERA_LED_NEG, &result);
++	if (err)
++		return err;
++	if (!(result & ASUS_WMI_DSTS_PRESENCE_BIT))
++		return -ENODEV;
++
++	return !(result & BIT(0));
++}
++
++static void asus_wmi_camera_privacy_toggle(struct asus_wmi *asus)
++{
++	int blocked = asus_wmi_camera_privacy_get(asus);
++
++	if (blocked < 0)
++		return;
++
++	if (asus_wmi_set_devstate(ASUS_WMI_DEVID_CAMERA_LED_NEG, blocked, NULL))
++		return;
++
++	input_report_switch(asus->inputdev, SW_CAMERA_LENS_COVER, !blocked);
++	input_sync(asus->inputdev);
++}
++
+ static int asus_wmi_input_init(struct asus_wmi *asus)
+ {
+ 	struct device *dev = &asus->platform_device->dev;
+@@ -758,6 +792,16 @@ static int asus_wmi_input_init(struct asus_wmi *asus)
+ 		break;
+ 	}
+ 
++	if (asus->driver->quirks->camera_privacy_gpio) {
++		int blocked = asus_wmi_camera_privacy_get(asus);
++
++		if (blocked >= 0) {
++			input_set_capability(asus->inputdev, EV_SW, SW_CAMERA_LENS_COVER);
++			input_report_switch(asus->inputdev, SW_CAMERA_LENS_COVER, blocked);
++			input_sync(asus->inputdev);
++		}
++	}
++
+ 	err = input_register_device(asus->inputdev);
+ 	if (err)
+ 		goto err_free_dev;
+@@ -4666,6 +4710,11 @@ static void asus_wmi_handle_event_code(int code, struct asus_wmi *asus)
+ 		return;
+ 	}
+ 
++	if (code == NOTIFY_CAMERA_TOGGLE && asus->driver->quirks->camera_privacy_gpio) {
++		asus_wmi_camera_privacy_toggle(asus);
++		return;
++	}
++
+ 	if (code == asus->tablet_switch_event_code) {
+ 		asus_wmi_tablet_mode_get_state(asus);
+ 		return;
+diff --git a/drivers/platform/x86/asus-wmi.h b/drivers/platform/x86/asus-wmi.h
+index 5cd4392b9..13be1e391 100644
+--- a/drivers/platform/x86/asus-wmi.h
++++ b/drivers/platform/x86/asus-wmi.h
+@@ -41,6 +41,8 @@ struct quirk_entry {
+ 	bool wmi_force_als_set;
+ 	bool wmi_ignore_fan;
+ 	bool filter_i8042_e1_extended_codes;
++	/* Fn+F10 has to flip ASUS_WMI_DEVID_CAMERA_LED_NEG, which also blocks the webcam */
++	bool camera_privacy_gpio;
+ 	int key_wlan_event;
+ 	enum asus_wmi_tablet_switch_mode tablet_switch_mode;
+ 	int wapf;
+diff --git a/include/linux/platform_data/x86/asus-wmi.h b/include/linux/platform_data/x86/asus-wmi.h
+index b5ed8c83a..85e46392f 100644
+--- a/include/linux/platform_data/x86/asus-wmi.h
++++ b/include/linux/platform_data/x86/asus-wmi.h
+@@ -56,7 +56,7 @@
+ #define ASUS_WMI_DEVID_MICMUTE_LED		0x00040017
+ 
+ /* Disable Camera LED */
+-#define ASUS_WMI_DEVID_CAMERA_LED_NEG	0x00060078 /* 0 = on (unused) */
++#define ASUS_WMI_DEVID_CAMERA_LED_NEG	0x00060078 /* 0 = on, UX7602ZM: webcam privacy line */
+ #define ASUS_WMI_DEVID_CAMERA_LED	0x00060079 /* 1 = on */
+ 
+ /* Backlight and Brightness */
+-- 
+2.43.0
+

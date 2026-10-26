@@ -1,0 +1,9 @@
+# ASUS Zenbook UX7602ZM
+
+# Touchpad (I2C HID 093A:3F01): restore the haptic click strength as soon as
+# its hidraw node appears, at boot and after the device is re-created.
+ACTION=="add", SUBSYSTEM=="hidraw", KERNELS=="0018:093A:3F01.*", TAG+="systemd", ENV{SYSTEMD_WANTS}+="zb-touchpad-haptic.service"
+
+# Keyboard backlight / colour without the kernel module (hidraw fallback).
+ACTION=="add", SUBSYSTEM=="hidraw", KERNELS=="0003:0B05:8854.*", ENV{.zb_kbd}="1"
+ACTION=="add", ENV{.zb_kbd}=="1", ATTRS{bInterfaceNumber}=="01", TAG+="systemd", ENV{SYSTEMD_WANTS}+="zb-kbd-restore.service"
