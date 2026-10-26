@@ -10,6 +10,16 @@
 
 Requires kernel ≥ 6.7 and linux-firmware ≥ 2024-01. Tested target: Fedora 44.
 
+## Check from a Live USB first
+
+Boot Fedora 44 Live, open this folder from the USB stick, then:
+
+```bash
+sudo python3 diag/zb-livetest.py
+```
+
+It walks through the touchpad, keyboard backlight, Fn keys, camera, Dial and speakers without installing anything, asks what you see and hear, and saves `livetest-<date>.tar.gz` next to the script. The camera check needs Secure Boot off.
+
 ## Install
 
 ```bash
