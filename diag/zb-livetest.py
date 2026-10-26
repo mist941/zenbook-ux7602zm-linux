@@ -84,13 +84,6 @@ def record(name, status, detail):
     log(f"[{status}] {name}: {detail}")
 
 
-def countdown(seconds):
-    for left in range(seconds, 0, -1):
-        print(f"\r  ...{left:2d} с ", end="", flush=True)
-        yield
-    print("\r            ")
-
-
 # --- devices -------------------------------------------------------------------
 
 def hid_devices(ids):
@@ -134,22 +127,20 @@ def set_feature(node, data, length):
 def read_events(fds, seconds, show=True):
     """Collect (fd, bytes) chunks from non-blocking fds for some seconds."""
     chunks = []
-    ticker = countdown(seconds) if show else None
     end = time.time() + seconds
-    next_tick = time.time()
-    while time.time() < end:
-        if ticker and time.time() >= next_tick:
-            next(ticker, None)
-            next_tick += 1
-        ready, _, _ = select.select(fds, [], [], 0.1)
+    shown = None
+    while (left := end - time.time()) > 0:
+        if show and math.ceil(left) != shown:
+            shown = math.ceil(left)
+            print(f"\r  ...{shown:2d} с ", end="", flush=True)
+        ready, _, _ = select.select(fds, [], [], min(0.1, left))
         for fd in ready:
             try:
                 chunks.append((fd, os.read(fd, 4096)))
             except OSError:
                 pass
-    if ticker:
-        for _ in ticker:
-            pass
+    if show:
+        print("\r" + " " * 14 + "\r", end="", flush=True)
     return chunks
 
 
@@ -231,6 +222,7 @@ class HotkeyWatcher:
         node = keyboard_vendor_hidraw()
         if node:
             self.fds[open_nb(node)] = "hid"
+        self._remove_kprobe()
         try:
             with open(f"{TRACE}/kprobe_events", "a") as f:
                 f.write(f"p:{KPROBE} asus_wmi:asus_wmi_notify code=+8(%di):x32\n")
@@ -253,17 +245,21 @@ class HotkeyWatcher:
                 wmi += [int(c, 16) for c in re.findall(r"code=(0x[0-9a-f]+)", data.decode(errors="replace"))]
         return hid, wmi
 
+    @staticmethod
+    def _remove_kprobe():
+        """Also clears a probe left behind by an interrupted earlier run."""
+        for path, text in ((f"{TRACE}/events/{KPROBE}/enable", "0"), (f"{TRACE}/kprobe_events", f"-:{KPROBE}\n")):
+            try:
+                with open(path, "a" if path.endswith("kprobe_events") else "w") as f:
+                    f.write(text)
+            except OSError:
+                pass
+
     def close(self):
         for fd in self.fds:
             os.close(fd)
         if self.kprobe:
-            try:
-                with open(f"{TRACE}/events/{KPROBE}/enable", "w") as f:
-                    f.write("0")
-                with open(f"{TRACE}/kprobe_events", "a") as f:
-                    f.write(f"-:{KPROBE}\n")
-            except OSError:
-                pass
+            self._remove_kprobe()
 
 
 def codes(values):
@@ -315,14 +311,15 @@ def test_touchpad():
     set_feature(node, bytes([0x09, 50]), 2)
     felt = yes("Чи відчувався клік (вібровідгук) у раунді 2?")
 
+    counts = f"кліки: без виправлення {p0}, сила 50 → {p1}, сила 0 → {p2}"
     if not moved:
-        record("тачпад", "FAIL", "курсор не рухається — причина інша, ніж сила кліку")
-    elif p1 >= 2 and p2 == 0:
-        detail = "сила кліку керує натисканням" + (", без виправлення кліку не було — причину підтверджено"
-                                                  if p0 == 0 else f", але й без виправлення було {p0} кліки")
-        record("тачпад", "PASS", detail)
+        record("тачпад", "FAIL", "курсор не рухається — причина інша, ніж сила кліку; " + counts)
+    elif p1 >= 2:
+        verdict = ("без виправлення кліку не було — причину підтверджено" if p0 == 0
+                   else "клік працював і без виправлення — справжня причина була іншою")
+        record("тачпад", "PASS", f"із силою 50 клік працює, {verdict}; {counts}")
     else:
-        record("тачпад", "FAIL", f"кліки: без виправлення {p0}, сила 50 → {p1}, сила 0 → {p2}")
+        record("тачпад", "FAIL", "із силою 50 клік не працює; " + counts)
     record("тачпад: відчуття кліку", "INFO", {True: "так", False: "ні", None: "не відповіли"}[felt])
     log("Сила кліку лишилася 50.")
 
@@ -604,7 +601,7 @@ def listening_test(tone, label):
     as_user("wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "0.5")
     answer = ask("Другий тон був: а) майже такий самий, б) трохи тихіший, в) значно тихіший? [а/б/в]")
     return {"а": "майже такий самий", "a": "майже такий самий", "б": "трохи тихіший",
-            "в": "значно тихіший", "b": "значно тихіший"}.get(answer)
+            "b": "трохи тихіший", "в": "значно тихіший", "v": "значно тихіший"}.get(answer)
 
 
 def try_audio_fix():
@@ -721,8 +718,13 @@ def main():
     finally:
         watcher.close()
 
+    dmesg_after = subprocess.run(["dmesg"], capture_output=True, text=True).stdout
     with open(os.path.join(out_dir, "dmesg-after.txt"), "w") as f:
-        f.write(subprocess.run(["dmesg"], capture_output=True, text=True).stdout)
+        f.write(dmesg_after)
+    with open(os.path.join(out_dir, "dmesg-before.txt")) as f:
+        known = set(f.read().splitlines())
+    warnings = [l for l in dmesg_after.splitlines() if l not in known and re.search(r"WARNING:|BUG:|Oops", l)]
+    record("попередження ядра під час перевірки", "INFO", warnings[0] if warnings else "немає")
     diag = os.path.join(KIT, "diag", "zb-diag.sh")
     if os.path.exists(diag):
         log("\nЗбираю повну діагностику (zb-diag.sh)...")
